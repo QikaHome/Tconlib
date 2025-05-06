@@ -1,4 +1,4 @@
 {
     "entity.qikas_tconlib.thrown_tool":"掷出的工具",
-    "entity.qikas_tconlib.thrown_tool_with_tool_name":"掷出的%%"
+    "entity.qikas_tconlib.thrown_tool_with_tool_name":"掷出的%s"
 }

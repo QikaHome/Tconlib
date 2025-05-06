@@ -50,7 +50,7 @@ public class ThrownToolRenderer extends EntityRenderer<ThrownTool> {
             // 将矩阵堆栈压入
             matrixStackIn.pushPose();
             // 获取物品渲染模式
-            int renderMode =entity.getItem().getTag().getInt("thrownRenderMode"); 
+            int renderMode =entity.getItem().hasTag()?entity.getItem().getTag().getInt("thrownRenderMode"):0; 
             if (renderMode == 0) {// 尖端朝前
                 // 旋转使尖端朝前进方向
                 matrixStackIn.mulPose(QuaternionUtils.fromLookDirection(entity.getLookAngle()));
@@ -58,12 +58,12 @@ public class ThrownToolRenderer extends EntityRenderer<ThrownTool> {
                 // 绕 X 轴旋转 90 度
                 matrixStackIn.mulPose(Axis.XP.rotationDegrees(90));
                 // 如果实体不在地面上，则绕 Z 轴旋转
-                if (entity.inGroundTime==0) {
+                if (!entity.inGround()) {
                     // 旋转角度为 (entity.tickCount + partialTicks) * 30 % 360
                     matrixStackIn.mulPose(Axis.ZP.rotationDegrees(-(entity.tickCount + partialTicks) * 30 % 360));
                 } else {
                     // 如果在地面上，则不旋转
-                    matrixStackIn.mulPose(Axis.ZP.rotationDegrees(0));
+                    matrixStackIn.mulPose(Axis.ZP.rotationDegrees(90));
                 }
                 // 平移矩阵堆栈
                 matrixStackIn.translate(-0.03125, -0.09375, 0);

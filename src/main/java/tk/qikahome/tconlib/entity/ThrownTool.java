@@ -42,29 +42,34 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    public ItemStack toolItem = new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation("tconstruct:sword")));
    public boolean dealtDamage;
    public int clientSideReturnTridentTickCount;
-   public int inGroundTime;
+
+   public boolean inGround() {
+      return this.inGround;
+   }
 
    @Override
    public Component getDisplayName() {
-       if(this.getItem()!=null)
-         return Component.translatable("entity.qikas_tconlib.thrown_tool_with_tool_name", (String)null, this.getItem().getDisplayName());
-       return super.getDisplayName();
+      if (this.getItem() != null && this.getItem().getHoverName() != null)
+         return Component.translatable("entity.qikas_tconlib.thrown_tool_with_tool_name",
+               this.getItem().getHoverName());
+      return super.getDisplayName();
    }
 
    public void defineSynchedData() {
-      this.getEntityData().define(DATA_ITEM_STACK, new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation("tconstruct:sword"))).copyWithCount(1));
+      this.getEntityData().define(DATA_ITEM_STACK,
+            new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation("tconstruct:sword"))).copyWithCount(1));
       super.defineSynchedData();
    }
 
    public ThrownTool(EntityType<? extends ThrownTool> entity, Level level) {
       super(entity, level);
-      //System.out.println("Try to spawn entity");
+      // System.out.println("Try to spawn entity");
    }
 
    public ThrownTool(Level p_37569_, LivingEntity p_37570_, ItemStack p_37571_) {
       super(Entities.THROWN_TOOL.get(), p_37570_, p_37569_);
       this.setItem(p_37571_.copy());
-      //System.out.println("Try to spawn entity");
+      // System.out.println("Try to spawn entity");
    }
 
    public void tick() {
@@ -102,7 +107,7 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
       super.tick();
    }
 
-   private boolean isAcceptibleReturnOwner() {
+   public boolean isAcceptibleReturnOwner() {
       Entity entity = this.getOwner();
       if (entity != null && entity.isAlive()) {
          return !(entity instanceof ServerPlayer) || !entity.isSpectator();
@@ -120,11 +125,11 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    }
 
    @Nullable
-   protected EntityHitResult findHitEntity(Vec3 p_37575_, Vec3 p_37576_) {
+   public EntityHitResult findHitEntity(Vec3 p_37575_, Vec3 p_37576_) {
       return this.dealtDamage ? null : super.findHitEntity(p_37575_, p_37576_);
    }
 
-   protected void onHitEntity(EntityHitResult p_37573_) {
+   public void onHitEntity(EntityHitResult p_37573_) {
       Entity entity = p_37573_.getEntity();
       float damage = ToolStack.copyFrom(toolItem).getStats().get(ToolStats.ATTACK_DAMAGE);
       if (entity instanceof LivingEntity livingentity) {
@@ -173,12 +178,12 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
       return EnchantmentHelper.hasChanneling(this.toolItem);
    }
 
-   protected boolean tryPickup(Player p_150196_) {
+   public boolean tryPickup(Player p_150196_) {
       return super.tryPickup(p_150196_)
             || this.isNoPhysics() && this.ownedBy(p_150196_) && p_150196_.getInventory().add(this.getPickupItem());
    }
 
-   protected SoundEvent getDefaultHitGroundSoundEvent() {
+   public SoundEvent getDefaultHitGroundSoundEvent() {
       return SoundEvents.TRIDENT_HIT_GROUND;
    }
 
@@ -190,7 +195,7 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    }
 
    public void readAdditionalSaveData(CompoundTag p_37578_) {
-      //System.out.println("Read Additional Save Data " + p_37578_.getAsString());
+      // System.out.println("Read Additional Save Data " + p_37578_.getAsString());
       if (p_37578_.contains("item", 10)) {
          this.setItem(ItemStack.of(p_37578_.getCompound("item")));
       }
@@ -212,13 +217,13 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    }
 
    public void setItem(ItemStack p_37447_) {
-      //System.out.println("Set item tag" + p_37447_.getTag().getAsString());
+      // System.out.println("Set item tag" + p_37447_.getTag().getAsString());
       this.toolItem = p_37447_.copy();
       this.getEntityData().set(DATA_ITEM_STACK, toolItem);
    }
 
-   protected float getWaterInertia() {
-      return 0.99F;
+   public float getWaterInertia() {
+      return super.getWaterInertia();
    }
 
    public boolean shouldRender(double p_37588_, double p_37589_, double p_37590_) {
@@ -227,8 +232,8 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
 
    public ItemStack getItem() {
       toolItem = this.getEntityData().get(DATA_ITEM_STACK);
-      //if (this.level().isClientSide)
-      //   System.out.println("Client get item " + Item.getId(item.getItem()));
+      // if (this.level().isClientSide)
+      // System.out.println("Client get item " + Item.getId(item.getItem()));
       return toolItem;
    }
 
