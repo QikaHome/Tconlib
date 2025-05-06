@@ -42,6 +42,7 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    public ItemStack toolItem = new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation("tconstruct:sword")));
    public boolean dealtDamage;
    public int clientSideReturnTridentTickCount;
+   public int inGroundTime;
 
    @Override
    public Component getDisplayName() {

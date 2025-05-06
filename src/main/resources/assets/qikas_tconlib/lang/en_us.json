@@ -1,4 +1,4 @@
 {
     "entity.qikas_tconlib.thrown_tool":"Thrown Tool",
-    "entity.qikas_tconlib.thrown_tool_with_tool_name":"Thrown %1"
+    "entity.qikas_tconlib.thrown_tool_with_tool_name":"Thrown %%"
 }

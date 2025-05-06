@@ -58,7 +58,7 @@ public class ThrownToolRenderer extends EntityRenderer<ThrownTool> {
                 // 绕 X 轴旋转 90 度
                 matrixStackIn.mulPose(Axis.XP.rotationDegrees(90));
                 // 如果实体不在地面上，则绕 Z 轴旋转
-                if (!entity.onGround()) {
+                if (entity.inGroundTime==0) {
                     // 旋转角度为 (entity.tickCount + partialTicks) * 30 % 360
                     matrixStackIn.mulPose(Axis.ZP.rotationDegrees(-(entity.tickCount + partialTicks) * 30 % 360));
                 } else {
