@@ -1,7 +1,3 @@
-
-/*
- *    MCreator note: This file will be REGENERATED on each build.
- */
 package tk.qikahome.tconlib.init;
 
 import tk.qikahome.tconlib.entity.ThrownTool;

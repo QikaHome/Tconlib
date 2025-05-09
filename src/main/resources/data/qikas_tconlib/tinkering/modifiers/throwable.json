@@ -1,0 +1,11 @@
+{
+  "level_display": "tconstruct:no_level",
+  "modules": [
+    {
+      "type": "qikas_tconlib:tool_throwing",
+      "durability_cost":{"flat":1},
+      "render_mode":{"flat":1}
+    }
+  ],
+  "tooltip_display": "always"
+}

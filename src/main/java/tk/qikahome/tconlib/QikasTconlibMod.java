@@ -1,6 +1,7 @@
 package tk.qikahome.tconlib;
 
 import tk.qikahome.tconlib.init.Entities;
+import tk.qikahome.tconlib.init.Modifiers;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -37,9 +38,8 @@ public class QikasTconlibMod {
 		// End of user code block mod constructor
 		MinecraftForge.EVENT_BUS.register(this);
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-
 		Entities.REGISTRY.register(bus);
-
+		Modifiers.MODIFIERS.register(bus);
 		// Start of user code block mod init
 		// End of user code block mod init
 	}

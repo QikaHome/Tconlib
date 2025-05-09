@@ -66,9 +66,9 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
       // System.out.println("Try to spawn entity");
    }
 
-   public ThrownTool(Level p_37569_, LivingEntity p_37570_, ItemStack p_37571_) {
-      super(Entities.THROWN_TOOL.get(), p_37570_, p_37569_);
-      this.setItem(p_37571_.copy());
+   public ThrownTool(Level level, LivingEntity shotter, ItemStack tool) {
+      super(Entities.THROWN_TOOL.get(), shotter, level);
+      this.setItem(tool.copy());
       // System.out.println("Try to spawn entity");
    }
 
