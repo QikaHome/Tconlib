@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -76,11 +77,18 @@ public class ToolDuplicateManagerModifier extends Modifier
     @Override
     public void onInventoryTick(IToolStackView tool, ModifierEntry modifier, Level world, LivingEntity holder,
             int itemSlot, boolean isSelected, boolean isCorrectSlot, ItemStack stack) {
-        ToolStack toolStack = (ToolStack) tool;
-        if (toolStack.getModifierLevel(Modifiers.TOOL_UUID_PROVIDER.getId()) == 0) {
-            toolStack.addModifier(Modifiers.TOOL_UUID_PROVIDER.getId(), 1);
-            stack.setCount(0);
-            ((Player)holder).getInventory().add(toolStack.createStack());
+        if (!world.isClientSide && holder.tickCount % 20 == 0) {
+            ToolUUIDProviderModifier provider = Modifiers.TOOL_UUID_PROVIDER.get();
+            ModifierEntry entry = tool.getModifier(provider);
+            // has a 5% chance of restoring each second per level
+            if (entry.getLevel() == 0) {
+                ((ToolStack) tool).addModifier(Modifiers.TOOL_UUID_PROVIDER.getId(), 1);
+                if (holder instanceof ServerPlayer player) {
+                    stack.setCount(0);
+                    player.addItem(((ToolStack) tool).createStack());
+                }
+
+            }
         }
     }
 }

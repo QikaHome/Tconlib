@@ -29,6 +29,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -144,48 +145,24 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
 
    public void onHitEntity(EntityHitResult p_37573_) {
       Entity entity = p_37573_.getEntity();
-      ItemStack itemStack=getItem();
-      ToolStack toolStack=ToolStack.copyFrom(itemStack);
       Entity entity1 = this.getOwner();
+      ItemStack itemStack = getItem();
+      ToolStack toolStack = ToolStack.copyFrom(itemStack);
       SoundEvent soundevent = SoundEvents.TRIDENT_HIT;
-      DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
       float damagebase = toolStack.getStats().get(ToolStats.ATTACK_DAMAGE);
-      float damage=damagebase;
-      ToolAttackContext attackContext = new ToolAttackContext((LivingEntity) entity1, (Player) entity1,
-               InteractionHand.MAIN_HAND, entity, entity instanceof LivingEntity ? (LivingEntity) entity : null, false,
-               1f,
-               false);
-      for(ModifierEntry entry:toolStack.getModifierList())
-      {
-         if(entry instanceof MeleeDamageModifierHook hook)
-         damage=hook.getMeleeDamage(toolStack,entry,attackContext,damagebase,damage);
-      }
-      itemStack.hurt((int) damage,(RandomSource)damagesource,entity1 instanceof ServerPlayer?(ServerPlayer)entity1:null);
-      /*
+      float damage = damagebase;
       if ((LivingEntity) entity1 != null) {
          ToolAttackContext attackContext = new ToolAttackContext((LivingEntity) entity1, (Player) entity1,
                InteractionHand.MAIN_HAND, entity, entity instanceof LivingEntity ? (LivingEntity) entity : null, false,
                1f,
                false);
-
-         DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
-         this.dealtDamage = true;
-         if (entity.hurt(damagesource, damage)) {
-            if (entity.getType() == EntityType.ENDERMAN) {
-               return;
-            }
-            if (entity instanceof LivingEntity) {
-               ToolStack item = ToolStack.copyFrom(this.getItem());
-               for (ModifierEntry entry : item.getModifierList()) {
-                  if (entry instanceof MeleeHitModifierHook hook)
-                     hook.afterMeleeHit(item, entry, attackContext, damage);
-               }
-            }
+         for (ModifierEntry entry : toolStack.getModifierList()) {
+            if (entry instanceof MeleeDamageModifierHook hook)
+               damage = hook.getMeleeDamage(toolStack, entry, attackContext, damagebase, damage);
          }
-      } else {
          DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
          this.dealtDamage = true;
-         if (entity.hurt(damagesource, damage)) {
+         if (entity.hurt(damagesource, toolStack.getStats().get(ToolStats.ATTACK_DAMAGE))) {
             if (entity.getType() == EntityType.ENDERMAN) {
                return;
             }
@@ -199,8 +176,28 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
                this.doPostHurtEffects(livingentity1);
             }
          }
-      }*/
+         for (ModifierEntry entry : toolStack.getModifierList()) {
+            if (entry instanceof MeleeHitModifierHook hook)
+               hook.afterMeleeHit(toolStack, entry, attackContext, damage);
+         }
+      } else {
+         DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
+         this.dealtDamage = true;
+         if (entity.hurt(damagesource, toolStack.getStats().get(ToolStats.ATTACK_DAMAGE))) {
+            if (entity.getType() == EntityType.ENDERMAN) {
+               return;
+            }
+            if (entity instanceof LivingEntity) {
+               LivingEntity livingentity1 = (LivingEntity) entity;
+               if (entity1 instanceof LivingEntity) {
+                  EnchantmentHelper.doPostHurtEffects(livingentity1, entity1);
+                  EnchantmentHelper.doPostDamageEffects((LivingEntity) entity1, livingentity1);
+               }
 
+               this.doPostHurtEffects(livingentity1);
+            }
+         }
+      }
       this.setDeltaMovement(this.getDeltaMovement().multiply(-0.01D, -0.1D, -0.01D));
       float f1 = 1.0F;
       if (this.level() instanceof ServerLevel && this.level().isThundering() && this.isChanneling()) {
@@ -238,9 +235,11 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
                   if (ItemStack.isSameItem(stack, itemStack)) {
                      ToolStack toolStack2 = ToolStack.copyFrom(stack);
                      if (ToolUUIDProviderModifier.hasSameUUID(toolStack, toolStack2)) {
-                        ToolDuplicateManagerModifier.setDupCount(toolStack2,
-                              ToolDuplicateManagerModifier.getDupCount(toolStack)
-                                    + ToolDuplicateManagerModifier.getDupCount(toolStack2));
+                        if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0) {
+                           ToolDuplicateManagerModifier.setDupCount(toolStack2,
+                                 ToolDuplicateManagerModifier.getDupCount(toolStack)
+                                       + ToolDuplicateManagerModifier.getDupCount(toolStack2));
+                        }
                         toolStack2.setDamage(toolStack2.getDamage() - toolStack.getStats().getInt(ToolStats.DURABILITY)
                               - toolStack.getDamage());
                         inventory.setItem(i, toolStack2.createStack());
@@ -249,9 +248,10 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
                   }
                   i++;
                }
-               return player.getInventory().add(this.getPickupItem());
+
             }
-            return player.getInventory().add(this.getPickupItem());
+            if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) == 0)
+               return false;
          }
          return player.getInventory().add(this.getPickupItem());
       }

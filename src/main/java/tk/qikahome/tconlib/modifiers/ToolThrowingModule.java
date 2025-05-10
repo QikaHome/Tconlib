@@ -11,6 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -36,6 +37,7 @@ import slimeknights.tconstruct.library.modifiers.hook.build.ToolStatsModifierHoo
 import slimeknights.tconstruct.library.modifiers.hook.build.ValidateModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.interaction.GeneralInteractionModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.interaction.InteractionSource;
+import slimeknights.tconstruct.library.modifiers.hook.interaction.InventoryTickModifierHook;
 import slimeknights.tconstruct.library.modifiers.modules.ModifierModule;
 import slimeknights.tconstruct.library.module.HookProvider;
 import slimeknights.tconstruct.library.module.ModuleHook;
@@ -49,13 +51,16 @@ import slimeknights.tconstruct.library.tools.nbt.StatsNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.stat.ModifierStatsBuilder;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
+import slimeknights.tconstruct.tools.TinkerModifiers;
+import slimeknights.tconstruct.tools.modifiers.ability.fluid.SpittingModifier;
 import slimeknights.tconstruct.tools.modifiers.upgrades.ranged.ScopeModifier;
+import slimeknights.tconstruct.tools.modules.OvergrowthModule;
 import tk.qikahome.tconlib.QikasTconlibMod;
 import tk.qikahome.tconlib.entity.ThrownTool;
 import tk.qikahome.tconlib.init.Modifiers;
 
 public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability_of_dup)
-        implements ModifierModule, GeneralInteractionModifierHook {
+        implements ModifierModule, GeneralInteractionModifierHook, InventoryTickModifierHook {
 
     public static final List<ModuleHook<?>> DEFAULT_HOOKS = HookProvider
             .<ToolThrowingModule>defaultHooks(ModifierHooks.GENERAL_INTERACT);
@@ -82,8 +87,7 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
     @Override
     public InteractionResult onToolUse(IToolStackView tool, ModifierEntry modifier, Player player, InteractionHand hand,
             InteractionSource source) {
-        if ((tool.getStats().getInt(ToolStats.DURABILITY) - tool.getDamage() 
-                >= durability_of_dup.flat())
+        if ((tool.getStats().getInt(ToolStats.DURABILITY) - tool.getDamage() >= durability_of_dup.flat())
                 && !tool.isBroken() && source == InteractionSource.RIGHT_CLICK
                 && (tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0
                         ? tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId())
@@ -144,7 +148,7 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
 
                 // setup projectile target
                 Vec3 upVector = entity.getUpVector(1.0f);
-                float angle = startAngle;
+                float angle = startAngle+15;
                 Vector3f targetVector = entity.getViewVector(1.0f).toVector3f()
                         .rotate((new Quaternionf()).setAngleAxis(angle * Math.PI / 180F, upVector.x,
                                 upVector.y, upVector.z));
@@ -167,5 +171,23 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
             }
         }
 
+    }
+
+    @Override
+    public void onInventoryTick(IToolStackView tool, ModifierEntry modifier, Level world, LivingEntity holder,
+            int itemSlot, boolean isSelected, boolean isCorrectSlot, ItemStack stack) {
+        if (!world.isClientSide && holder.tickCount % 20 == 0) {
+            ToolUUIDProviderModifier provider = Modifiers.TOOL_UUID_PROVIDER.get();
+            ModifierEntry entry = tool.getModifier(provider);
+            // has a 5% chance of restoring each second per level
+            if (entry.getLevel() == 0) {
+                ((ToolStack) tool).addModifier(Modifiers.TOOL_UUID_PROVIDER.getId(), 1);
+                if (holder instanceof ServerPlayer player) {
+                    stack.setCount(0);
+                    player.addItem(((ToolStack) tool).createStack());
+                }
+
+            }
+        }
     }
 }
