@@ -18,6 +18,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TridentItem;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import slimeknights.mantle.data.loadable.record.RecordLoadable;
@@ -53,8 +55,7 @@ import tk.qikahome.tconlib.entity.ThrownTool;
 import tk.qikahome.tconlib.init.Modifiers;
 
 public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability_of_dup)
-        implements ModifierModule, GeneralInteractionModifierHook, ToolStatsModifierHook, ValidateModifierHook,
-        ModifierRemovalHook {
+        implements ModifierModule, GeneralInteractionModifierHook {
 
     public static final List<ModuleHook<?>> DEFAULT_HOOKS = HookProvider
             .<ToolThrowingModule>defaultHooks(ModifierHooks.GENERAL_INTERACT);
@@ -74,12 +75,19 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
     }
 
     @Override
+    public UseAnim getUseAction(IToolStackView tool, ModifierEntry modifier) {
+        return UseAnim.SPEAR;
+    }
+
+    @Override
     public InteractionResult onToolUse(IToolStackView tool, ModifierEntry modifier, Player player, InteractionHand hand,
             InteractionSource source) {
-        if (tool.getStats().getInt(ToolStats.DURABILITY) - tool.getDamage() >= durability_of_dup.flat()
+        if ((tool.getStats().getInt(ToolStats.DURABILITY) - tool.getDamage() 
+                >= durability_of_dup.flat())
                 && !tool.isBroken() && source == InteractionSource.RIGHT_CLICK
-                && (tool.getPersistentData().contains(ToolDuplicateManagerModifier.DupCountLocation, Tag.TAG_INT)
-                        ? tool.getPersistentData().getInt(ToolDuplicateManagerModifier.DupCountLocation) > 0
+                && (tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0
+                        ? tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId())
+                                - tool.getPersistentData().getInt(ToolDuplicateManagerModifier.DupCountLocation) > 0
                         : true)) {
             // launch if the fluid has effects, cannot simulate as we don't know the target
             // yet
@@ -89,10 +97,12 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
         return InteractionResult.PASS;
     }
 
-    public int getUseDuration(ToolStack tool, ModifierEntry activeModifier) {
+    @Override
+    public int getUseDuration(IToolStackView tool, ModifierEntry modifier) {
         return 72000;
     }
 
+    @Override
     public void onStoppedUsing(IToolStackView tool, ModifierEntry modifier, LivingEntity entity, int timeLeft) {
         ScopeModifier.stopScoping(entity);
         Level world = entity.level();
@@ -102,7 +112,7 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
                 // other stats now that we know we are shooting
                 // velocity determines how far it goes, does not impact damage unlike bows
                 float velocity = ConditionalStatModifierHook.getModifiedStat(tool, entity,
-                        ToolStats.VELOCITY) * 3.0f;
+                        ToolStats.VELOCITY);
                 float inaccuracy = ModifierUtil.getInaccuracy(tool, entity);
 
                 // multishot stuff
@@ -113,22 +123,21 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
                 if (durability_of_dup.flat() != 0) {
                     tool.setDamage(tool.getDamage() + durability_of_dup.flat());
                     newTool.setDamage(newTool.getStats().getInt(ToolStats.DURABILITY) - durability_of_dup.flat());
+                    newTool.addModifier(Modifiers.IS_DUPLICATE.getId(), 1);
                     if (tool.getModifierLevel(
-                        new ModifierId(QikasTconlibMod.MODID, ToolDuplicateManagerModifier.localId)) > 0) {
-                    newTool.addModifier(new ModifierId(QikasTconlibMod.MODID, "is_duplicates_duplicate"), 1);
-                    tool.getPersistentData().putInt(ToolDuplicateManagerModifier.DupCountLocation,
-                            tool.getPersistentData().getInt(ToolDuplicateManagerModifier.DupCountLocation) - 1);
-                    newTool.getPersistentData().putInt(ToolDuplicateManagerModifier.DupCountLocation, 1);
-                }
+                            Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0) {
+                        tool.getPersistentData().putInt(ToolDuplicateManagerModifier.DupCountLocation,
+                                tool.getPersistentData().getInt(ToolDuplicateManagerModifier.DupCountLocation) + 1);
+                        newTool.getPersistentData().putInt(ToolDuplicateManagerModifier.DupCountLocation,
+                                tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) - 1);
+                    }
                 } else {
-                    for(ItemStack stack:entity.getAllSlots())
-                    {
-                        if(ItemStack.isSameItemSameTags(stack,((ToolStack)tool).createStack()))
-                        stack.setCount(stack.getCount()-1);
+                    for (ItemStack stack : entity.getAllSlots()) {
+                        if (ItemStack.isSameItemSameTags(stack, ((ToolStack) tool).createStack()))
+                            stack.setCount(stack.getCount() - 1);
                     }
                 }
-                
-                
+
                 ItemStack newStack = newTool.createStack();
                 newStack.getTag().putInt("thrownRenderMode", render_mode.flat());
                 ThrownTool toolEntity = new ThrownTool(world, entity, newStack);
@@ -152,29 +161,11 @@ public record ToolThrowingModule(LevelingInt render_mode, LevelingInt durability
                 // finally, fire the projectile
                 world.addFreshEntity(toolEntity);
                 world.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                        SoundEvents.LLAMA_SPIT, SoundSource.PLAYERS, 1.0F,
+                        SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 1.0F,
                         1.0F / (world.getRandom().nextFloat() * 0.4F + 1.2F)
                                 + (angle / 10f));
             }
         }
 
-    }
-
-    @Override
-    public void addToolStats(IToolContext context, ModifierEntry modifier, ModifierStatsBuilder builder) {
-        return;
-    }
-
-    @Override
-    @Nullable
-    public Component onRemoved(IToolStackView tool, Modifier modifier) {
-        return null;
-    }
-
-    @Override
-    @Nullable
-    public Component validate(IToolStackView tool, ModifierEntry modifier) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'validate'");
     }
 }

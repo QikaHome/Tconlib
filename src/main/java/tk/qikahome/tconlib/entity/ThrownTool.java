@@ -14,26 +14,39 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
+import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
+import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeDamageModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeHitModifierHook;
+import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
+import slimeknights.tconstruct.library.tools.item.IModifiable;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
 import tk.qikahome.tconlib.init.Entities;
+import tk.qikahome.tconlib.init.Modifiers;
+import tk.qikahome.tconlib.modifiers.ToolDuplicateManagerModifier;
+import tk.qikahome.tconlib.modifiers.ToolUUIDProviderModifier;
 import net.minecraftforge.api.distmarker.Dist;
+import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
 public class ThrownTool extends AbstractArrow implements ItemSupplier {
@@ -131,29 +144,62 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
 
    public void onHitEntity(EntityHitResult p_37573_) {
       Entity entity = p_37573_.getEntity();
-      float damage = ToolStack.copyFrom(toolItem).getStats().get(ToolStats.ATTACK_DAMAGE);
-      if (entity instanceof LivingEntity livingentity) {
-         damage += EnchantmentHelper.getDamageBonus(this.toolItem, livingentity.getMobType());
-      }
+      ItemStack itemStack=getItem();
+      ToolStack toolStack=ToolStack.copyFrom(itemStack);
       Entity entity1 = this.getOwner();
-      DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
-      this.dealtDamage = true;
       SoundEvent soundevent = SoundEvents.TRIDENT_HIT;
-      if (entity.hurt(damagesource, damage)) {
-         if (entity.getType() == EntityType.ENDERMAN) {
-            return;
-         }
-
-         if (entity instanceof LivingEntity) {
-            LivingEntity livingentity1 = (LivingEntity) entity;
-            if (entity1 instanceof LivingEntity) {
-               EnchantmentHelper.doPostHurtEffects(livingentity1, entity1);
-               EnchantmentHelper.doPostDamageEffects((LivingEntity) entity1, livingentity1);
-            }
-
-            this.doPostHurtEffects(livingentity1);
-         }
+      DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
+      float damagebase = toolStack.getStats().get(ToolStats.ATTACK_DAMAGE);
+      float damage=damagebase;
+      ToolAttackContext attackContext = new ToolAttackContext((LivingEntity) entity1, (Player) entity1,
+               InteractionHand.MAIN_HAND, entity, entity instanceof LivingEntity ? (LivingEntity) entity : null, false,
+               1f,
+               false);
+      for(ModifierEntry entry:toolStack.getModifierList())
+      {
+         if(entry instanceof MeleeDamageModifierHook hook)
+         damage=hook.getMeleeDamage(toolStack,entry,attackContext,damagebase,damage);
       }
+      itemStack.hurt((int) damage,(RandomSource)damagesource,entity1 instanceof ServerPlayer?(ServerPlayer)entity1:null);
+      /*
+      if ((LivingEntity) entity1 != null) {
+         ToolAttackContext attackContext = new ToolAttackContext((LivingEntity) entity1, (Player) entity1,
+               InteractionHand.MAIN_HAND, entity, entity instanceof LivingEntity ? (LivingEntity) entity : null, false,
+               1f,
+               false);
+
+         DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
+         this.dealtDamage = true;
+         if (entity.hurt(damagesource, damage)) {
+            if (entity.getType() == EntityType.ENDERMAN) {
+               return;
+            }
+            if (entity instanceof LivingEntity) {
+               ToolStack item = ToolStack.copyFrom(this.getItem());
+               for (ModifierEntry entry : item.getModifierList()) {
+                  if (entry instanceof MeleeHitModifierHook hook)
+                     hook.afterMeleeHit(item, entry, attackContext, damage);
+               }
+            }
+         }
+      } else {
+         DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
+         this.dealtDamage = true;
+         if (entity.hurt(damagesource, damage)) {
+            if (entity.getType() == EntityType.ENDERMAN) {
+               return;
+            }
+            if (entity instanceof LivingEntity) {
+               LivingEntity livingentity1 = (LivingEntity) entity;
+               if (entity1 instanceof LivingEntity) {
+                  EnchantmentHelper.doPostHurtEffects(livingentity1, entity1);
+                  EnchantmentHelper.doPostDamageEffects((LivingEntity) entity1, livingentity1);
+               }
+
+               this.doPostHurtEffects(livingentity1);
+            }
+         }
+      }*/
 
       this.setDeltaMovement(this.getDeltaMovement().multiply(-0.01D, -0.1D, -0.01D));
       float f1 = 1.0F;
@@ -178,9 +224,38 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
       return EnchantmentHelper.hasChanneling(this.toolItem);
    }
 
-   public boolean tryPickup(Player p_150196_) {
-      return super.tryPickup(p_150196_)
-            || this.isNoPhysics() && this.ownedBy(p_150196_) && p_150196_.getInventory().add(this.getPickupItem());
+   public boolean tryPickup(Player player) {
+      if (this.pickup == Pickup.ALLOWED && this.isNoPhysics()) {
+         ItemStack itemStack = this.getPickupItem();
+         ToolStack toolStack = ToolStack.copyFrom(itemStack);
+         if (toolStack.getModifierLevel(Modifiers.IS_DUPLICATE.getId()) > 0) {
+            Inventory inventory = player.getInventory();
+            if (inventory.countItem(itemStack.getItem()) > 0) {
+               int max = inventory.getContainerSize();
+               int i = 0;
+               while (i < max) {
+                  ItemStack stack = inventory.getItem(i);
+                  if (ItemStack.isSameItem(stack, itemStack)) {
+                     ToolStack toolStack2 = ToolStack.copyFrom(stack);
+                     if (ToolUUIDProviderModifier.hasSameUUID(toolStack, toolStack2)) {
+                        ToolDuplicateManagerModifier.setDupCount(toolStack2,
+                              ToolDuplicateManagerModifier.getDupCount(toolStack)
+                                    + ToolDuplicateManagerModifier.getDupCount(toolStack2));
+                        toolStack2.setDamage(toolStack2.getDamage() - toolStack.getStats().getInt(ToolStats.DURABILITY)
+                              - toolStack.getDamage());
+                        inventory.setItem(i, toolStack2.createStack());
+                        return true;
+                     }
+                  }
+                  i++;
+               }
+               return player.getInventory().add(this.getPickupItem());
+            }
+            return player.getInventory().add(this.getPickupItem());
+         }
+         return player.getInventory().add(this.getPickupItem());
+      }
+      return false;
    }
 
    public SoundEvent getDefaultHitGroundSoundEvent() {

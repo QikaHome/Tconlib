@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 import net.minecraftforge.network.simple.SimpleChannel;
+import slimeknights.tconstruct.tools.TinkerModifiers;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.fml.util.thread.SidedThreadGroups;
@@ -34,18 +35,14 @@ public class QikasTconlibMod {
 	public static final String MODID = "qikas_tconlib";
 
 	public QikasTconlibMod() {
-		// Start of user code block mod constructor
-		// End of user code block mod constructor
 		MinecraftForge.EVENT_BUS.register(this);
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		Entities.REGISTRY.register(bus);
 		Modifiers.MODIFIERS.register(bus);
-		// Start of user code block mod init
-		// End of user code block mod init
+		bus.register(Modifiers.class);
 	}
 
-	// Start of user code block mod methods
-	// End of user code block mod methods
+
 	private static final String PROTOCOL_VERSION = "1";
 	public static final SimpleChannel PACKET_HANDLER = NetworkRegistry.newSimpleChannel(new ResourceLocation(MODID, MODID), () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
 	private static int messageID = 0;
