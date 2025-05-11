@@ -1,11 +1,13 @@
 package tk.qikahome.tconlib.entity;
 
+import java.lang.reflect.Method;
+import java.util.function.DoubleSupplier;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -14,40 +16,32 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.registries.ForgeRegistries;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeDamageModifierHook;
-import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeHitModifierHook;
-import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
-import slimeknights.tconstruct.library.tools.item.IModifiable;
+import slimeknights.tconstruct.library.tools.helper.ToolAttackUtil;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
-import slimeknights.tconstruct.library.tools.stat.ToolStats;
+import slimeknights.tconstruct.tools.logic.ToolEvents;
 import tk.qikahome.tconlib.init.Entities;
 import tk.qikahome.tconlib.init.Modifiers;
 import tk.qikahome.tconlib.modifiers.ToolDuplicateManagerModifier;
 import tk.qikahome.tconlib.modifiers.ToolUUIDProviderModifier;
 import net.minecraftforge.api.distmarker.Dist;
-import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
 public class ThrownTool extends AbstractArrow implements ItemSupplier {
@@ -131,7 +125,7 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    }
 
    public ItemStack getPickupItem() {
-      return this.toolItem.copy();
+      return getItem().copy();
    }
 
    public boolean isFoil() {
@@ -143,78 +137,75 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
       return this.dealtDamage ? null : super.findHitEntity(p_37575_, p_37576_);
    }
 
-   public void onHitEntity(EntityHitResult p_37573_) {
-      Entity entity = p_37573_.getEntity();
-      Entity entity1 = this.getOwner();
-      ItemStack itemStack = getItem();
-      ToolStack toolStack = ToolStack.copyFrom(itemStack);
-      SoundEvent soundevent = SoundEvents.TRIDENT_HIT;
-      float damagebase = toolStack.getStats().get(ToolStats.ATTACK_DAMAGE);
-      float damage = damagebase;
-      if ((LivingEntity) entity1 != null) {
-         ToolAttackContext attackContext = new ToolAttackContext((LivingEntity) entity1, (Player) entity1,
-               InteractionHand.MAIN_HAND, entity, entity instanceof LivingEntity ? (LivingEntity) entity : null, false,
-               1f,
-               false);
-         for (ModifierEntry entry : toolStack.getModifierList()) {
-            if (entry instanceof MeleeDamageModifierHook hook)
-               damage = hook.getMeleeDamage(toolStack, entry, attackContext, damagebase, damage);
-         }
-         DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
-         this.dealtDamage = true;
-         if (entity.hurt(damagesource, toolStack.getStats().get(ToolStats.ATTACK_DAMAGE))) {
-            if (entity.getType() == EntityType.ENDERMAN) {
-               return;
-            }
-            if (entity instanceof LivingEntity) {
-               LivingEntity livingentity1 = (LivingEntity) entity;
-               if (entity1 instanceof LivingEntity) {
-                  EnchantmentHelper.doPostHurtEffects(livingentity1, entity1);
-                  EnchantmentHelper.doPostDamageEffects((LivingEntity) entity1, livingentity1);
-               }
+   public void onHitBlock(BlockHitResult p_37573_) {
+      ProjectileImpactEvent event = new ProjectileImpactEvent(this, p_37573_);
+      try {
+         // 获取方法对象
+         Method method = ToolEvents.class.getDeclaredMethod("projectileHit", ProjectileImpactEvent.class);
+         method.setAccessible(true); // 突破访问限制
 
-               this.doPostHurtEffects(livingentity1);
-            }
-         }
-         for (ModifierEntry entry : toolStack.getModifierList()) {
-            if (entry instanceof MeleeHitModifierHook hook)
-               hook.afterMeleeHit(toolStack, entry, attackContext, damage);
-         }
-      } else {
-         DamageSource damagesource = this.damageSources().trident(this, (Entity) (entity1 == null ? this : entity1));
-         this.dealtDamage = true;
-         if (entity.hurt(damagesource, toolStack.getStats().get(ToolStats.ATTACK_DAMAGE))) {
-            if (entity.getType() == EntityType.ENDERMAN) {
-               return;
-            }
-            if (entity instanceof LivingEntity) {
-               LivingEntity livingentity1 = (LivingEntity) entity;
-               if (entity1 instanceof LivingEntity) {
-                  EnchantmentHelper.doPostHurtEffects(livingentity1, entity1);
-                  EnchantmentHelper.doPostDamageEffects((LivingEntity) entity1, livingentity1);
-               }
-
-               this.doPostHurtEffects(livingentity1);
-            }
-         }
+         // 调用方法（假设 event 是构造好的 ProjectileImpactEvent 实例）
+         method.invoke(null, event); // 静态方法，第一个参数传 null
+      } catch (Exception e) {
+         e.printStackTrace();
       }
+      if (event.isCanceled()) {
+         this.dealtDamage = true;
+         return;
+      }
+      super.onHitBlock(p_37573_);
+   }
+
+   public void onHitEntity(EntityHitResult p_37573_) {
+      ProjectileImpactEvent event = new ProjectileImpactEvent(this, p_37573_);
+      try {
+         // 获取方法对象
+         Method method = ToolEvents.class.getDeclaredMethod("projectileHit", ProjectileImpactEvent.class);
+         method.setAccessible(true); // 突破访问限制
+
+         // 调用方法（假设 event 是构造好的 ProjectileImpactEvent 实例）
+         method.invoke(null, event); // 静态方法，第一个参数传 null
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+      if (event.isCanceled()) {
+         this.dealtDamage = true;
+         return;
+      }
+      Entity targetEntity = p_37573_.getEntity();
+      LivingEntity attacker = null;
+      Entity owner = this.getOwner();
+      if (owner != null)
+         attacker = ToolAttackUtil.getLivingEntity(owner);
+      if (attacker == null)
+         return;
+      ItemStack itemStack = getItem();
+      ToolStack tool = ToolStack.from(itemStack);
+      SoundEvent soundevent = SoundEvents.TRIDENT_HIT;
+      ToolAttackUtil.attackEntity(tool, attacker, InteractionHand.MAIN_HAND, targetEntity, new DoubleSupplier() {
+         public double getAsDouble() {
+            return 1;
+         }
+      }, false);
       this.setDeltaMovement(this.getDeltaMovement().multiply(-0.01D, -0.1D, -0.01D));
       float f1 = 1.0F;
       if (this.level() instanceof ServerLevel && this.level().isThundering() && this.isChanneling()) {
-         BlockPos blockpos = entity.blockPosition();
+         BlockPos blockpos = targetEntity.blockPosition();
          if (this.level().canSeeSky(blockpos)) {
             LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(this.level());
             if (lightningbolt != null) {
                lightningbolt.moveTo(Vec3.atBottomCenterOf(blockpos));
-               lightningbolt.setCause(entity1 instanceof ServerPlayer ? (ServerPlayer) entity1 : null);
+               lightningbolt.setCause(attacker instanceof ServerPlayer ? (ServerPlayer) attacker : null);
                this.level().addFreshEntity(lightningbolt);
                soundevent = SoundEvents.TRIDENT_THUNDER;
                f1 = 5.0F;
             }
          }
       }
-
       this.playSound(soundevent, f1, 1.0F);
+      if (tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) == 0
+            && tool.getModifierLevel(Modifiers.IS_DUPLICATE.getId()) != 0)
+         this.discard();
    }
 
    public boolean isChanneling() {
@@ -224,38 +215,29 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    public boolean tryPickup(Player player) {
       if (this.pickup == Pickup.ALLOWED && this.isNoPhysics()) {
          ItemStack itemStack = this.getPickupItem();
-         ToolStack toolStack = ToolStack.copyFrom(itemStack);
-         if (toolStack.getModifierLevel(Modifiers.IS_DUPLICATE.getId()) > 0) {
-            Inventory inventory = player.getInventory();
-            if (inventory.countItem(itemStack.getItem()) > 0) {
-               int max = inventory.getContainerSize();
-               int i = 0;
-               while (i < max) {
-                  ItemStack stack = inventory.getItem(i);
-                  if (ItemStack.isSameItem(stack, itemStack)) {
-                     ToolStack toolStack2 = ToolStack.copyFrom(stack);
-                     if (ToolUUIDProviderModifier.hasSameUUID(toolStack, toolStack2)) {
-                        if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0) {
-                           ToolDuplicateManagerModifier.setDupCount(toolStack2,
-                                 ToolDuplicateManagerModifier.getDupCount(toolStack)
-                                       + ToolDuplicateManagerModifier.getDupCount(toolStack2));
-                        }
-                        toolStack2.setDamage(toolStack2.getDamage() - toolStack.getStats().getInt(ToolStats.DURABILITY)
-                              - toolStack.getDamage());
-                        inventory.setItem(i, toolStack2.createStack());
-                        return true;
-                     }
-                  }
-                  i++;
-               }
+         ToolStack toolStack = ToolStack.from(itemStack);
+         if (toolStack.getModifierLevel(Modifiers.IS_DUPLICATE.getId()) != 0) {
+            for (ItemStack stack : player.getAllSlots()) {
+               ToolStack toolStack2 = ToolStack.from(stack);
+               if (ToolUUIDProviderModifier.hasSameUUID(toolStack, toolStack2)) {
 
+                  if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0) {
+                     toolStack2.setDamage(Math.max(toolStack2.getDamage(), toolStack.getDamage()));
+                     ToolDuplicateManagerModifier.setDupCount(toolStack2,
+                           ToolDuplicateManagerModifier.getDupCount(toolStack)
+                                 + ToolDuplicateManagerModifier.getDupCount(toolStack2));
+                  } else
+                     toolStack2.setDamage(toolStack2.getDamage() - toolStack.getDamage() - 1);
+                  toolStack2.updateStack(stack);
+                  player.getInventory().setChanged();
+                  return true;
+               }
             }
             if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) == 0)
                return false;
          }
-         return player.getInventory().add(this.getPickupItem());
       }
-      return false;
+      return super.tryPickup(player);
    }
 
    public SoundEvent getDefaultHitGroundSoundEvent() {

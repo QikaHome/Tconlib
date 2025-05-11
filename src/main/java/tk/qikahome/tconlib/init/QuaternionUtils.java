@@ -10,29 +10,31 @@ public class QuaternionUtils {
      * @return 表示旋转的四元数
      */
     public static Quaternionf fromLookDirection(Vec3 lookDirection) {
-        // 1. 定义初始方向：尖端默认指向 X+ 向上 45 度（非单位向量，需归一化）
-        Vec3 defaultTipDirection = new Vec3(1, 1, 0).normalize();
-    
-        // 2. 归一化目标方向
-        Vec3 targetDirection =  new Vec3(lookDirection.x*-1, lookDirection.y*-1, lookDirection.z).normalize();
-    
-        // 3. 计算旋转轴和角度
-        Vec3 axis = defaultTipDirection.cross(targetDirection);
-        double dot = defaultTipDirection.dot(targetDirection);
-    
-        // 4. 处理共线情况
+        // 0. 计算移动方向
+        lookDirection=new Vec3(lookDirection.x*-1,lookDirection.y*-1,lookDirection.z);
+        // 1. 默认前方向（Z+ 轴正方向）
+        Vec3 forward = new Vec3(0, 0, 1);
+
+        // 2. 计算旋转轴和角度
+        Vec3 axis = forward.cross(lookDirection);
+        double dot = forward.dot(lookDirection);
+
+        // 3. 处理方向相同或相反的特殊情况
         if (axis.lengthSqr() < 1e-6) {
             if (dot < 0) {
-                // 方向相反：绕垂直轴旋转 180 度（此处假设 Z 轴为垂直轴）
-                return new Quaternionf().rotationZ((float) Math.PI);
+                // 方向相反：绕 Y 轴旋转 180 度
+                return new Quaternionf().rotationY((float) Math.PI);
             } else {
-                return new Quaternionf(); // 无旋转
+                // 方向相同：无旋转
+                return new Quaternionf();
             }
         }
-    
-        // 5. 计算旋转四元数
+
+        // 4. 计算旋转角度（弧度）
         axis = axis.normalize();
         double angle = Math.acos(dot);
+
+        // 5. 构造四元数（使用 JOML 的轴-角方法）
         return new Quaternionf().fromAxisAngleRad(
             (float) axis.x, 
             (float) axis.y, 

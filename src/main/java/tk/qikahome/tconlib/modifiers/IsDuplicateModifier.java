@@ -8,9 +8,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
+import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.hook.build.ModifierRemovalHook;
 import slimeknights.tconstruct.library.modifiers.hook.build.ValidateModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.interaction.InventoryTickModifierHook;
+import slimeknights.tconstruct.library.module.ModuleHookMap.Builder;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import tk.qikahome.tconlib.init.Modifiers;
 
@@ -19,9 +21,18 @@ public class IsDuplicateModifier extends Modifier
     public static String localId = "is_duplicate";
 
     @Override
+    public void registerHooks(Builder hookBuilder) {
+        super.registerHooks(hookBuilder);
+        hookBuilder.addHook(this, ModifierHooks.REMOVE);
+        hookBuilder.addHook(this, ModifierHooks.VALIDATE);
+        hookBuilder.addHook(this, ModifierHooks.INVENTORY_TICK);
+    }
+
+    @Override
     public void onInventoryTick(IToolStackView tool, ModifierEntry modifier, Level world, LivingEntity holder,
             int itemSlot, boolean isSelected, boolean isCorrectSlot, ItemStack stack) {
-        if (tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) == 0)
+        if (tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) == 0
+                || ToolDuplicateManagerModifier.getDupCount(tool) == 0)
             stack.setCount(0);
     }
 
@@ -32,8 +43,8 @@ public class IsDuplicateModifier extends Modifier
     }
 
     @Override
-    public Component getDisplayName() {
-        return super.getDisplayName();
+    public Component getDisplayName(int level) {
+        return getDisplayName();
     }
 
     @Override

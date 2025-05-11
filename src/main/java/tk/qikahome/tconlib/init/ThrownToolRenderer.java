@@ -13,6 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import tk.qikahome.tconlib.entity.ThrownTool;
+import tk.qikahome.tconlib.library.ThrownRenderMode;
 
 //渲染ThrownTool实体
 public class ThrownToolRenderer extends EntityRenderer<ThrownTool> {
@@ -50,27 +51,25 @@ public class ThrownToolRenderer extends EntityRenderer<ThrownTool> {
             // 将矩阵堆栈压入
             matrixStackIn.pushPose();
             // 获取物品渲染模式
-            int renderMode =entity.getItem().hasTag()?entity.getItem().getTag().getInt("thrownRenderMode"):0; 
-            if (renderMode == 0) {// 尖端朝前
-                // 旋转使尖端朝前进方向
-                matrixStackIn.mulPose(QuaternionUtils.fromLookDirection(entity.getLookAngle()));
-            } else if (renderMode == 1) {// 水平旋转
-                // 绕 X 轴旋转 90 度
-                matrixStackIn.mulPose(Axis.XP.rotationDegrees(90));
-                // 如果实体不在地面上，则绕 Z 轴旋转
-                if (!entity.inGround()) {
-                    // 旋转角度为 (entity.tickCount + partialTicks) * 30 % 360
-                    matrixStackIn.mulPose(Axis.ZP.rotationDegrees(-(entity.tickCount + partialTicks) * 30 % 360));
-                } else {
-                    // 如果在地面上，则不旋转
-                    matrixStackIn.mulPose(Axis.ZP.rotationDegrees(90));
+            try {
+                ThrownRenderMode renderMode = ThrownRenderMode.fromNBT(entity.getItem().getTagElement("render_mode"));
+                if (renderMode.faceTowards()) {// 尖端朝前
+                    // 旋转使尖端朝前进方向
+                    matrixStackIn.mulPose(QuaternionUtils.fromLookDirection(entity.getLookAngle()));
                 }
-                // 平移矩阵堆栈
-                matrixStackIn.translate(-0.03125, -0.09375, 0);
+                // 添加预先旋转&位移
+                renderMode.premove().applyParas(matrixStackIn, 1);
+                // 如果未落地，添加空中的
+                if (!entity.inGround())
+                    renderMode.flying().applyParas(matrixStackIn, entity.tickCount + partialTicks);
+                else // 否则添加落地的
+                    renderMode.on_ground().applyParas(matrixStackIn, entity.tickCount + partialTicks);
+                // 添加收尾
+                renderMode.postmove().applyParas(matrixStackIn, 1);
+            } catch (Exception e) {
+                // Do Nothing
             }
             // 渲染静态物品
-            // System.out.println("rendering tool"+entity.toolItem+"with
-            // tags"+entity.toolItem.getTags());
             this.itemRenderer.render(entity.getItem(), ItemDisplayContext.GROUND, false, matrixStackIn, buffIn,
                     packedLightIn, OverlayTexture.NO_OVERLAY,
                     this.itemRenderer.getModel(entity.getItem(), entity.level(), (LivingEntity) null, entity.getId()));
@@ -83,7 +82,7 @@ public class ThrownToolRenderer extends EntityRenderer<ThrownTool> {
     }
 
     /**
-     * 获取 TinkerShurikenEntity 实体的纹理位置。
+     * 获取实体的纹理位置。
      *
      * @param entity 要获取纹理的实体。
      * @return 纹理的资源位置。

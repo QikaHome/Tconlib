@@ -1,0 +1,20 @@
+{
+  "level_display": "tconstruct:no_levels",
+  "modules": [
+    {
+      "注释":"类似于印第安战斧",
+      "type": "qikas_tconlib:tool_throwing",
+      "render_mode": {
+        "faceTowards": false,
+        "base": {
+          "yRot": 90
+        },
+        "per_tick": {
+          "zRot": -30
+        }
+      },
+      "durability_of_dup": 1
+    }
+  ],
+  "tooltip_display": "always"
+}

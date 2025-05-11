@@ -1,4 +1,25 @@
 {
-    "entity.qikas_tconlib.thrown_tool":"Thrown Tool",
-    "entity.qikas_tconlib.thrown_tool_with_tool_name":"Thrown %s"
+    "entity.qikas_tconlib.thrown_tool": "Thrown Tool",
+    "entity.qikas_tconlib.thrown_tool_with_tool_name": "Thrown %s",
+    "message.qikas_tconlib.is_duplicate.cantEdit": "Not allowed to edit the tool copy.",
+
+    "modifier.qikas_tconlib.tool_duplicate_manager": "Number of tool copies",
+    "modifier.qikas_tconlib.tool_duplicate_manager.flavor": "Look, I have copies of this tool!",
+    "modifier.qikas_tconlib.tool_duplicate_manager.description": "Allow to throw copies of this tool",
+
+    "modifier.qikas_tconlib.is_duplicate": "Tool copy",
+    "modifier.qikas_tconlib.is_duplicate.flavor": "A copy of the tool!",
+    "modifier.qikas_tconlib.is_duplicate.description": "But not allowed to edit",
+    
+    "modifier.qikas_tconlib.tool_uuid_provider": "UUID Provider",
+    "modifier.qikas_tconlib.tool_uuid_provider.flavor": "Unique!",
+    "modifier.qikas_tconlib.tool_uuid_provider.description": "For thrown tool pickuping",
+
+    "modifier.qikas_tconlib.loyalty": "Loyalty",
+    "modifier.qikas_tconlib.loyalty.flavor": "It goes and returns!",
+    "modifier.qikas_tconlib.loyalty.description": "Make the thrown tool return automatically",
+
+    "modifier.qikas_tconlib.throwable": "Throwable",
+    "modifier.qikas_tconlib.throwable.flavor": "Look, it flews away!",
+    "modifier.qikas_tconlib.throwable.description": "Make the tool throwable"
 }
