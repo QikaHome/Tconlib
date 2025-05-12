@@ -186,7 +186,7 @@ public class ToolUUIDProviderModifier extends Modifier {// implements ToolStatsM
 
     public static ResourceLocation UUIDLocation = new ResourceLocation("tool_uuid");
 
-    public static Boolean hasSameUUID(ToolStack a, ToolStack b) {
+    public static Boolean hasSameUUID(IToolStackView a, IToolStackView b) {
         return getUUID(a).toString() == getUUID(b).toString();
     }
 

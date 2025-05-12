@@ -79,7 +79,7 @@ public class ToolDuplicateManagerModifier extends Modifier
     }
 
     public static void setDupCount(IToolStackView toolStack, int count) {
-        toolStack.getPersistentData().putInt(DupCountLocation, count);
+        toolStack.getPersistentData().putInt(DupCountLocation, getMaxDupCount(toolStack)-count);
     }
 
     @Override

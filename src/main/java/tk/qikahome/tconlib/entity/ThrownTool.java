@@ -25,6 +25,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -213,26 +214,55 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    }
 
    public boolean tryPickup(Player player) {
-      if (this.pickup == Pickup.ALLOWED && this.isNoPhysics()) {
+      if (this.pickup == Pickup.ALLOWED) {
          ItemStack itemStack = this.getPickupItem();
          ToolStack toolStack = ToolStack.from(itemStack);
+         //System.out.println(toolStack.getModifierLevel(Modifiers.IS_DUPLICATE.getId()));
          if (toolStack.getModifierLevel(Modifiers.IS_DUPLICATE.getId()) != 0) {
-            for (ItemStack stack : player.getAllSlots()) {
-               ToolStack toolStack2 = ToolStack.from(stack);
-               if (ToolUUIDProviderModifier.hasSameUUID(toolStack, toolStack2)) {
-
-                  if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0) {
-                     toolStack2.setDamage(Math.max(toolStack2.getDamage(), toolStack.getDamage()));
-                     ToolDuplicateManagerModifier.setDupCount(toolStack2,
-                           ToolDuplicateManagerModifier.getDupCount(toolStack)
-                                 + ToolDuplicateManagerModifier.getDupCount(toolStack2));
-                  } else
-                     toolStack2.setDamage(toolStack2.getDamage() - toolStack.getDamage() - 1);
-                  toolStack2.updateStack(stack);
-                  player.getInventory().setChanged();
-                  return true;
+            for (ItemStack stack : player.getInventory().items) {
+               if (stack.getItem() == itemStack.getItem()) {
+                  ToolStack toolStack2 = ToolStack.from(stack);
+                  //System.out.println(ToolUUIDProviderModifier.getUUID(toolStack) + " and "
+                  //      + ToolUUIDProviderModifier.getUUID(toolStack2));
+                  if (ToolUUIDProviderModifier.getUUID(toolStack).toString().equals(ToolUUIDProviderModifier
+                        .getUUID(toolStack2).toString())) {
+                     //System.out.println("find same item");
+                     if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0) {
+                        toolStack2.setDamage(Math.max(toolStack2.getDamage(), toolStack.getDamage()));
+                        ToolDuplicateManagerModifier.setDupCount(toolStack2,
+                              ToolDuplicateManagerModifier.getDupCount(toolStack)
+                                    + ToolDuplicateManagerModifier.getDupCount(toolStack2));
+                     } else
+                        toolStack2.setDamage(toolStack2.getDamage() - toolStack.getDamage() - 1);
+                     toolStack2.updateStack(stack);
+                     player.getInventory().setChanged();
+                     return true;
+                  }
                }
             }
+            ItemStack stack = player.getInventory().offhand.get(0);
+            if (true) {
+               if (stack.getItem() == itemStack.getItem()) {
+                  ToolStack toolStack2 = ToolStack.from(stack);
+                  //System.out.println(ToolUUIDProviderModifier.getUUID(toolStack) + " and "
+                  //      + ToolUUIDProviderModifier.getUUID(toolStack2));
+                  if (ToolUUIDProviderModifier.getUUID(toolStack).toString().equals(ToolUUIDProviderModifier
+                        .getUUID(toolStack2).toString())) {
+                     //System.out.println("find same item");
+                     if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0) {
+                        toolStack2.setDamage(Math.max(toolStack2.getDamage(), toolStack.getDamage()));
+                        ToolDuplicateManagerModifier.setDupCount(toolStack2,
+                              ToolDuplicateManagerModifier.getDupCount(toolStack)
+                                    + ToolDuplicateManagerModifier.getDupCount(toolStack2));
+                     } else
+                        toolStack2.setDamage(toolStack2.getDamage() - toolStack.getDamage());
+                     toolStack2.updateStack(stack);
+                     player.getInventory().setChanged();
+                     return true;
+                  }
+               }
+            }
+            //System.out.println("for is over");
             if (toolStack.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) == 0)
                return false;
          }
