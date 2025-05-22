@@ -87,7 +87,7 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
       }
 
       Entity entity = this.getOwner();
-      int i = (byte) (ToolStack.copyFrom(toolItem).getModifierLevel(new ModifierId("qikas_tconlib", "loyalty")));
+      int i = (byte) (ToolStack.from(toolItem).getModifierLevel(new ModifierId("qikas_tconlib", "loyalty")));
       if (i > 0 && (this.dealtDamage || this.isNoPhysics()) && entity != null) {
          if (!this.isAcceptibleReturnOwner()) {
             if (!this.level().isClientSide && this.pickup == AbstractArrow.Pickup.ALLOWED) {
@@ -130,7 +130,7 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    }
 
    public boolean isFoil() {
-      return 0 != ToolStack.copyFrom(this.toolItem).getModifierLevel(new ModifierId("qikas_tconlib", "foil"));
+      return 0 != ToolStack.from(this.toolItem).getModifierLevel(new ModifierId("qikas_tconlib", "foil"));
    }
 
    @Nullable
@@ -296,7 +296,7 @@ public class ThrownTool extends AbstractArrow implements ItemSupplier {
    }
 
    public void tickDespawn() {
-      int i = (byte) (ToolStack.copyFrom(toolItem).getModifierLevel(new ModifierId("qikas_tconlib", "loyalty")));
+      int i = (byte) (ToolStack.from(toolItem).getModifierLevel(new ModifierId("qikas_tconlib", "loyalty")));
       if (this.pickup != AbstractArrow.Pickup.ALLOWED || i <= 0) {
          super.tickDespawn();
       }

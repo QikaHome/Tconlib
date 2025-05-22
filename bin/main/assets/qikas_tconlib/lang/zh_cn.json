@@ -1,0 +1,25 @@
+{
+    "entity.qikas_tconlib.thrown_tool":"掷出的工具",
+    "entity.qikas_tconlib.thrown_tool_with_tool_name":"掷出的%s",
+    "message.qikas_tconlib.is_duplicate.cantEdit": "禁止修改工具副本",
+
+    "modifier.qikas_tconlib.tool_duplicate_manager": "工具副本数量",
+    "modifier.qikas_tconlib.tool_duplicate_manager.flavor": "看，我有一打这样的工具！",
+    "modifier.qikas_tconlib.tool_duplicate_manager.description": "允许掷出工具副本",
+
+    "modifier.qikas_tconlib.is_duplicate": "工具副本",
+    "modifier.qikas_tconlib.is_duplicate.flavor": "工具的一个副本！",
+    "modifier.qikas_tconlib.is_duplicate.description": "但是不能修改",
+    
+    "modifier.qikas_tconlib.tool_uuid_provider": "UUID 提供者",
+    "modifier.qikas_tconlib.tool_uuid_provider.flavor": "就像身份证号！",
+    "modifier.qikas_tconlib.tool_uuid_provider.description": "处理捡起并合并掷出的工具副本",
+
+    "modifier.qikas_tconlib.loyalty": "忠诚",
+    "modifier.qikas_tconlib.loyalty.flavor": "它会回来的!",
+    "modifier.qikas_tconlib.loyalty.description": "使掷出的工具自动返回",
+
+    "modifier.qikas_tconlib.throwable": "可投掷",
+    "modifier.qikas_tconlib.throwable.flavor": "它被扔出去了！",
+    "modifier.qikas_tconlib.throwable.description": "使工具可投掷"
+}

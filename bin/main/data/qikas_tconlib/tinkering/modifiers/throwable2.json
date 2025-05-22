@@ -1,0 +1,22 @@
+{
+  "level_display": "tconstruct:no_levels",
+  "modules": [
+    {
+      "注释":"手里剑",
+      "type": "qikas_tconlib:tool_throwing",
+      "render_mode": {
+        "faceTowards": false,
+        "base": {
+          "xRot": 90,
+          "xTrans": -0.03125,
+          "yTrans": -0.09375
+        },
+        "per_tick": {
+          "zRot": -30
+        }
+      },
+      "durability_of_dup": 1
+    }
+  ],
+  "tooltip_display": "always"
+}
