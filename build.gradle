@@ -53,8 +53,8 @@ tasks.withType(JavaCompile).configureEach {
 apply from: 'mcreator.gradle'
 
 dependencies {
-    implementation fg.deobf("slimeknights.tconstruct:TConstruct:1.20.1-3.9.2.37")
-    implementation fg.deobf("slimeknights.mantle:Mantle:1.20.1-1.11.44")
+    implementation fg.deobf("slimeknights.tconstruct:TConstruct:1.20.1-3.10.2.92")
+    implementation fg.deobf("slimeknights.mantle:Mantle:1.20.1-1.11.71")
 }
 
 repositories {

@@ -1,5 +1,5 @@
 {
   "level_display": "tconstruct:default",
   "modules": [],
-  "tooltip_display": "never"
+  "tooltip_display": "always"
 }

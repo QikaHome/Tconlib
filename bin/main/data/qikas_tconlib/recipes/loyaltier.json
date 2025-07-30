@@ -1,0 +1,23 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "minecraft:ender_pearl"
+    },
+    {
+      "item": "minecraft:lead"
+    },
+    {
+      "tag": "forge:slimeballs"
+    }
+  ],
+  "level": {
+    "min": 2,
+    "max": 3
+  },
+  "result": "qikas_tconlib:loyalty",
+  "tools": {
+    "tag": "tconstruct:modifiable"
+  }
+}

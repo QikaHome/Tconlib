@@ -52,7 +52,8 @@ public class ThrownToolRenderer extends EntityRenderer<ThrownTool> {
             matrixStackIn.pushPose();
             // 获取物品渲染模式
             try {
-                ThrownRenderMode renderMode = ThrownRenderMode.fromNBT(entity.getItem().getTagElement("render_mode"));
+                ThrownRenderMode renderMode = ThrownRenderMode
+                        .fromNBT(entity.getItem().getTag().getCompound("thrownTempData").getCompound("render_mode"));
                 if (renderMode.faceTowards()) {// 尖端朝前
                     // 旋转使尖端朝前进方向
                     matrixStackIn.mulPose(QuaternionUtils.fromLookDirection(entity.getLookAngle()));

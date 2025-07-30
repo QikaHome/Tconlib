@@ -8,18 +8,19 @@
     "modifier.qikas_tconlib.tool_duplicate_manager.description": "允许掷出工具副本",
 
     "modifier.qikas_tconlib.is_duplicate": "工具副本",
-    "modifier.qikas_tconlib.is_duplicate.flavor": "工具的一个副本！",
-    "modifier.qikas_tconlib.is_duplicate.description": "但是不能修改",
+    "modifier.qikas_tconlib.is_duplicate.flavor": "我不应该在这！",
+    "modifier.qikas_tconlib.is_duplicate.description": "该副本由于以下某个原因无法合并至原工具：\n1. 未找到原工具\n2.无法合并存储至原工具",
     
-    "modifier.qikas_tconlib.tool_uuid_provider": "UUID 提供者",
+    "modifier.qikas_tconlib.tool_uuid_provider": "UUID",
     "modifier.qikas_tconlib.tool_uuid_provider.flavor": "就像身份证号！",
-    "modifier.qikas_tconlib.tool_uuid_provider.description": "处理捡起并合并掷出的工具副本",
+    "modifier.qikas_tconlib.tool_uuid_provider.description": "工具的身份标记，使你的工具易于识别",
 
     "modifier.qikas_tconlib.loyalty": "忠诚",
     "modifier.qikas_tconlib.loyalty.flavor": "它会回来的!",
     "modifier.qikas_tconlib.loyalty.description": "使掷出的工具自动返回",
+    "modifier.qikas_tconlib.loyalty.requirements":"“忠诚”需要工具为可投掷的",
 
     "modifier.qikas_tconlib.throwable": "可投掷",
-    "modifier.qikas_tconlib.throwable.flavor": "它被扔出去了！",
+    "modifier.qikas_tconlib.throwable.flavor": "咻咻咻！",
     "modifier.qikas_tconlib.throwable.description": "使工具可投掷"
 }

@@ -1,0 +1,23 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "minecraft:ender_pearl"
+    },
+    {
+      "item": "minecraft:lead"
+    },
+    {
+      "tag": "forge:slimeballs"
+    }
+  ],
+  "level": 1,
+  "result": "qikas_tconlib:loyalty",
+  "slots": {
+    "abilities": 1
+  },
+  "tools": {
+    "tag":"qikas_tconlib:modifiable/projectile"
+  }
+}

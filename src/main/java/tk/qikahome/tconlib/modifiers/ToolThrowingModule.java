@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import slimeknights.mantle.data.loadable.primitive.BooleanLoadable;
 import slimeknights.mantle.data.loadable.primitive.IntLoadable;
 import slimeknights.mantle.data.loadable.primitive.StringLoadable;
 import slimeknights.mantle.data.loadable.record.RecordLoadable;
@@ -35,12 +36,13 @@ import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import slimeknights.tconstruct.library.tools.nbt.ModDataNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
-import slimeknights.tconstruct.tools.modifiers.upgrades.ranged.ScopeModifier;
+import slimeknights.tconstruct.tools.modifiers.ability.fluid.SpillingModifier;
 import tk.qikahome.tconlib.entity.ThrownTool;
 import tk.qikahome.tconlib.init.Modifiers;
+import tk.qikahome.tconlib.library.ProjectileToolHelper;
 import tk.qikahome.tconlib.library.ThrownRenderMode;
 
-public record ToolThrowingModule(ThrownRenderMode render_mode, int durability_cost, String throw_mode)
+public record ToolThrowingModule(ThrownRenderMode render_mode, int durability_cost, Boolean can_direct_use)
         implements ModifierModule, GeneralInteractionModifierHook {// }, InventoryTickModifierHook {
 
     public static final List<ModuleHook<?>> DEFAULT_HOOKS = HookProvider
@@ -48,7 +50,7 @@ public record ToolThrowingModule(ThrownRenderMode render_mode, int durability_co
     public static final RecordLoadable<ToolThrowingModule> LOADER = RecordLoadable.create(
             ThrownRenderMode.LOADABLE.nullableField("render_mode", ToolThrowingModule::render_mode),
             IntLoadable.ANY_SHORT.defaultField("durability_cost", 0, ToolThrowingModule::durability_cost),
-            StringLoadable.DEFAULT.defaultField("throw_mode", "trident", ToolThrowingModule::throw_mode),
+            BooleanLoadable.DEFAULT.defaultField("can_direct_use", true, ToolThrowingModule::can_direct_use),
             ToolThrowingModule::new);
 
     @Override
@@ -60,8 +62,16 @@ public record ToolThrowingModule(ThrownRenderMode render_mode, int durability_co
     public List<ModuleHook<?>> getDefaultHooks() {
         return DEFAULT_HOOKS;
     }
-
-    @Override
+@Override
+    public UseAnim getUseAction(IToolStackView tool, ModifierEntry modifier) {
+        switch (throw_mode) {
+            case "trident":
+                return UseAnim.SPEAR;
+            default:
+                return UseAnim.NONE;
+        }
+    }
+    /*@Override
     public UseAnim getUseAction(IToolStackView tool, ModifierEntry modifier) {
         switch (throw_mode) {
             case "snowball":
@@ -75,27 +85,14 @@ public record ToolThrowingModule(ThrownRenderMode render_mode, int durability_co
             default:
                 return UseAnim.NONE;
         }
-    }
+    }*/
 
     @Override
     public InteractionResult onToolUse(IToolStackView tool, ModifierEntry modifier, Player player, InteractionHand hand,
             InteractionSource source) {
-        if ((tool.getStats().getInt(ToolStats.DURABILITY) - tool.getDamage() >= durability_cost)
-                && !tool.isBroken() && source == InteractionSource.RIGHT_CLICK
-                && (tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId()) > 0
-                        ? tool.getModifierLevel(Modifiers.TOOL_DUPLICATE_MANAGER.getId())
-                                - tool.getPersistentData().getInt(ToolDuplicateManagerModifier.DupCountLocation) > 0
-                        : true)) {
-            GeneralInteractionModifierHook.startUsingWithDrawtime(tool, modifier.getId(), player, hand, 1.5f);
-            Level world = player.level();
-            if (!world.isClientSide)
-                if ((throw_mode == "crossbow" && tool.getPersistentData().getBoolean(new ResourceLocation("reloaded")))
-                        || throw_mode == "snowball") {
-                    tool.getPersistentData().putBoolean(new ResourceLocation("reloaded"), false);
-                    shoot(tool, 2.5f, player, render_mode, durability_cost);
-                }
-            return InteractionResult.SUCCESS;
-        }
+
+                player.level().isClientSide()
+        ProjectileToolHelper.createProjectileStack(null, 0, null)
         return InteractionResult.PASS;
     }
 
@@ -177,7 +174,7 @@ public record ToolThrowingModule(ThrownRenderMode render_mode, int durability_co
 
     @Override
     public void onStoppedUsing(IToolStackView tool, ModifierEntry modifier, LivingEntity entity, int timeLeft) {
-        ScopeModifier.stopScoping(entity);
+        //ScopeModifier.stopScoping(entity);
         Level world = entity.level();
         if (!world.isClientSide) {
             int chargeTime = (int) ((getUseDuration(tool, modifier) - timeLeft)
