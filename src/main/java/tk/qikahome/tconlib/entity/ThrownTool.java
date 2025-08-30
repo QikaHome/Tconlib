@@ -82,7 +82,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import slimeknights.mantle.registration.object.ItemObject;
 import slimeknights.mantle.util.TagHelper;
 
-@OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
 public class ThrownTool extends AbstractArrow implements ItemSupplier {
    public static final EntityDataAccessor<ItemStack> DATA_ITEM_STACK = SynchedEntityData.defineId(ThrownTool.class,
          EntityDataSerializers.ITEM_STACK);
